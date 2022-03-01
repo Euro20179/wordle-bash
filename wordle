@@ -1,6 +1,8 @@
 #!/bin/bash
 clear
 
+words_list_path="$HOME/Documents/words.txt"
+
 mul_str (){
   new_str="$str"
   str="$1"
@@ -20,7 +22,7 @@ gen_board () {
 wordlen=5
 lives=5
 
-readarray words <<< "$(grep "^[[:lower:]].\{$((wordlen-1))\}$" $HOME/Documents/words.txt)"
+readarray words <<< "$(grep "^[[:lower:]].\{$((wordlen-1))\}$" $words_list_path)"
 
 declare -a board
 gen_board
