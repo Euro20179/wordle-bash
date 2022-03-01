@@ -1,0 +1,141 @@
+#!/bin/bash
+clear
+
+mul_str (){
+  new_str="$str"
+  str="$1"
+  times="$2"
+  for ((i=0; i<$times; i++)); do
+    new_str="$new_str$str"
+  done
+  printf "%s" "$new_str"
+}
+
+gen_board () {
+  for ((i=0; i<lives; i++)); do
+    board[${#board[@]}]="$(mul_str "_" $wordlen)" 
+  done
+}
+
+wordlen=5
+lives=5
+
+readarray words <<< "$(grep "^[[:lower:]].\{$((wordlen-1))\}$" $HOME/Documents/words.txt)"
+
+declare -a board
+gen_board
+declare -a guesses
+declare -a guess_info
+
+print_guess () {
+  printf "\033[s"
+  printf "\033[0;0HGUESS:"
+  printf "\033[u"
+}
+
+print_board () {
+  printf "\033[s"
+  printf "\033[2;0H"
+  for ((i=0; i<${#board[@]}; i++)); do
+    local curr_guess="${guess_info[$i]}"
+    local curr_word="${board[$i]}"
+    for ((l=0; l<wordlen; l++)); do
+      case "${curr_guess:$l:1}" in
+        0) printf "\033[31m" ;;
+        1) printf "\033[32m" ;;
+        2) printf "\033[33m" ;;
+      esac
+      printf "${curr_word:$l:1} "
+    done
+    printf "\n"
+  done
+  printf "\033[u\033[0m"
+}
+
+clear_line () {
+  printf "\033[K"
+}
+
+print_err () {
+  local fmt="$1"
+  shift
+  printf "\033[$LINES;0H\033[31m"
+  clear_line
+  printf "$fmt%b" "$@" "\033[0m"
+}
+
+print_info () {
+  local fmt="$1"
+  shift
+  printf "\033[$LINES;0H"
+  clear_line
+  printf "$fmt" "$@"
+}
+
+generate_new_word () {
+  selected_word="${words[$((RANDOM % ${#words[@]}))]}"
+}
+
+get_letter_correctness (){
+  local word="$1"
+  local correctness=
+  for ((i=0; i<${#word}; i++)); do
+    if [ "${word:$i:1}" = "${selected_word:$i:1}" ]; then
+      correctness="${correctness}1"
+    elif [[ "${selected_word}" =~ ${word:$i:1} ]]; then
+      correctness="${correctness}2"
+    else correctness="${correctness}0"
+    fi
+  done
+  printf "%s" "$correctness"
+}
+
+main () {
+  fifo="/tmp/wordle-fifo"
+  mkfifo "$fifo" 2>/dev/null
+  print_guess
+  for i in {1..7}; do printf "\n"; done
+  print_board
+  local guessNo=0
+  while read; do
+    clear
+    print_guess
+    case $REPLY in
+      w:ans|w:a) print_info "%s" "$ans" ;;
+      w:word-length*|w:wl*)
+        wordlen="${REPLY#*=}"
+        board=()
+        gen_board
+        print_info "%s" "word length set to $wordlen" ;;
+      w:reset|w:r)
+        board=()
+        guesses=()
+        guess_info=()
+        guessNo=0
+        gen_board ;;
+      w:new-word|w:nw) 
+        generate_new_word
+        print_info "%s" "generated new word with length: $wordlen"
+        ;;
+      $(mul_str "?" "$wordlen"))
+        if [[ "${words[@]}" =~ $REPLY ]]; then
+          guesses[guessNo]=$REPLY 
+          board[guessNo]="$REPLY" 
+          guess_info[guessNo]=$(get_letter_correctness "$REPLY")
+          (( guessNo++ ))
+        else
+          print_info "%s" "$REPLY not in word list"
+        fi
+        ;;
+      *) print_err "%s" "invalid word ($REPLY)" ;;
+    esac
+    printf "\033[7;0H"
+    print_board
+    (( guessNo >= lives )) && break
+  done
+  print_info "done"
+}
+
+generate_new_word
+
+main
