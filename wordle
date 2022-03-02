@@ -2,9 +2,13 @@
 clear
 
 use_bash_only=1
-while getopts "u" opt; do
+wordlen=5
+lives=5
+while getopts "ul:L:" opt; do
   case "$opt" in
     u) use_bash_only=0 ;;
+    l) lives=$OPTARG ;;
+    L) wordlen=$OPTARG ;;
   esac
 done
 shift $((OPTIND-1))
@@ -27,8 +31,6 @@ gen_board () {
   done
 }
 
-wordlen=5
-lives=5
 
 get_words () {
   [ "$use_bash_only" -eq 0 ] && grep "^[[:lower:]].\{$((wordlen-1))\}$" "$words_list_path" || {
@@ -145,7 +147,7 @@ main () {
   fifo="/tmp/wordle-fifo"
   mkfifo "$fifo" 2>/dev/null
   print_guess
-  for i in {1..7}; do printf "\n"; done
+  printf "\033[$((lives+2));0H"
   print_board
   local guessNo=0
   set -o emacs
