@@ -16,8 +16,8 @@ Wordle clone in ***pure*** bash
 ```
 wordle [-ulLf]
 Options:
-	-L    :length of answer word, default: 5
-	-u    :whether or not to use strictly bash (can be slow)
-	-l    :amount of lives, default: 5
-	-f    :specify a word list file, default: /home/euro/Documents/words.txt
+	-L    length of answer word, default: 5
+	-u    whether or not to use strictly bash (can be slow)
+	-l    amount of lives, default: 5
+	-f    specify a word list file, default: /home/euro/Documents/words.txt
 ```
