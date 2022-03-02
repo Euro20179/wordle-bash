@@ -1,6 +1,8 @@
 # Wordle
 
-Wordle clone in bash.
+![very nice](.assets/wojak.jpg)
+
+Wordle clone in ***pure*** bash
 
 # Install
 
