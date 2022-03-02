@@ -19,9 +19,8 @@ usage () {
   opts[l]="amount of lives, default: 5"
   opts[L]="length of answer word, default: 5"
   opts[f]="specify a word list file, default: $HOME/Documents/words.txt"
-  gap="$(mul_str ' ' 5)"
   for opt in ${!opts[@]}; do
-    printf "\t-%s:$gap%s\n" "$opt" "${opts[$opt]}"
+    printf "\t-%-5s%s\n" "$opt" "${opts[$opt]}"
   done
 }
 
