@@ -153,7 +153,7 @@ main () {
       w:word-length*|w:wl*) set_word_length "${REPLY#*=}" ;;
       w:reset|w:r) reset_game ;;
       w:new-word|w:nw) get_new_word ;;
-      *$selected_word*) printf "\033[32m%s\033[0m\n" "YOU WIN"; break ;;
+      *$selected_word*) printf "\033[32m%s\033[0m\n" "YOU WIN with $((lives-guessNo)) lives remaining"; break ;;
       $(mul_str "?" "$wordlen"))
         if [[ "${words[@]}" =~ $REPLY ]]; then
           guesses[guessNo]=$REPLY 
@@ -168,7 +168,7 @@ main () {
     esac
     printf "\033[$((lives+2));0H"
     print_board
-    (( guessNo >= lives )) && break
+    (( guessNo >= lives )) && printf "\033[31m%s\033[0m\n" "YOU LOSE, the word was $selected_word" && break
   done
 }
 
