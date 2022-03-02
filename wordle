@@ -1,7 +1,15 @@
 #!/bin/bash
 clear
 
-words_list_path="$HOME/Documents/words.txt"
+use_bash_only=1
+while getopts "u" opt; do
+  case "$opt" in
+    u) use_bash_only=0 ;;
+  esac
+done
+shift $((OPTIND-1))
+
+words_list_path="${1:-$HOME/Documents/words.txt}"
 
 mul_str (){
   new_str="$str"
@@ -23,12 +31,14 @@ wordlen=5
 lives=5
 
 get_words () {
-  pattern="[[:lower:]]$(mul_str ? $((wordlen - 1)))"
-  while read line; do
-    case "$line" in
-      $pattern) printf "%s\n" "$line" ;;
-    esac
-  done < "$words_list_path"
+  [ "$use_bash_only" -eq 0 ] && grep "^[[:lower:]].\{$((wordlen-1))\}$" "$words_list_path" || {
+    pattern="[[:lower:]]$(mul_str ? $((wordlen - 1)))"
+    while read line; do
+      case "$line" in
+        $pattern) printf "%s\n" "$line" ;;
+      esac
+    done < "$words_list_path"
+  }
 }
 
 readarray words <<< "$(get_words)"
