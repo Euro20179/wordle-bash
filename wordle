@@ -22,6 +22,16 @@ usage () {
   for opt in ${!opts[@]}; do
     printf "\t-%-5s%s\n" "$opt" "${opts[$opt]}"
   done
+  printf "%s\n" "Shortcuts:"
+  declare -A shortcuts
+  shortcuts[c-a]="print answer"
+  shortcuts[c-l]="set a new word length (does nothing else)"
+  shortcuts[c-r]="reset game"
+  shortcuts[c-n]="generate new word"
+  shortcuts[c-p]="clear screen"
+  for shortcut in ${!shortcuts[@]}; do
+    printf "\t%-6s%s\n" "$shortcut" "${shortcuts[$shortcut]}"
+  done
 }
 
 use_bash_only=1
