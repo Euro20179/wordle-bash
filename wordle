@@ -1,6 +1,17 @@
 #!/bin/bash
 clear
 
+
+mul_str (){
+  new_str="$str"
+  str="$1"
+  times="$2"
+  for ((i=0; i<$times; i++)); do
+    new_str="$new_str$str"
+  done
+  printf "%s" "$new_str"
+}
+
 usage () {
   printf "%s\n" "wordle [-ulLf]" "Options:"
   declare -A opts
@@ -8,8 +19,9 @@ usage () {
   opts[l]="amount of lives, default: 5"
   opts[L]="length of answer word, default: 5"
   opts[f]="specify a word list file, default: $HOME/Documents/words.txt"
+  gap="$(mul_str ' ' 5)"
   for opt in ${!opts[@]}; do
-    printf "\t-%-5s:%s\n" "$opt" "${opts[$opt]}"
+    printf "\t-%s:$gap%s\n" "$opt" "${opts[$opt]}"
   done
 }
 
@@ -28,16 +40,6 @@ while getopts "ul:L:f:h" opt; do
 done
 shift $((OPTIND-1))
 
-
-mul_str (){
-  new_str="$str"
-  str="$1"
-  times="$2"
-  for ((i=0; i<$times; i++)); do
-    new_str="$new_str$str"
-  done
-  printf "%s" "$new_str"
-}
 
 gen_board () {
   for ((i=0; i<lives; i++)); do
