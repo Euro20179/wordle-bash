@@ -22,7 +22,16 @@ gen_board () {
 wordlen=5
 lives=5
 
-readarray words <<< "$(grep "^[[:lower:]].\{$((wordlen-1))\}$" $words_list_path)"
+get_words () {
+  pattern="[[:lower:]]$(mul_str ? $((wordlen - 1)))"
+  while read line; do
+    case "$line" in
+      $pattern) printf "%s\n" "$line" ;;
+    esac
+  done < "$words_list_path"
+}
+
+readarray words <<< "$(get_words)"
 
 declare -a board
 gen_board
@@ -61,21 +70,23 @@ clear_line () {
 print_err () {
   local fmt="$1"
   shift
-  printf "\033[$LINES;0H\033[31m"
-  clear_line
-  printf "$fmt%b" "$@" "\033[0m"
+  print_info "\033[31m]$fmt" "$@"
 }
 
 print_info () {
   local fmt="$1"
   shift
+  printf "\033[s"
   printf "\033[$LINES;0H"
   clear_line
   printf "$fmt" "$@"
+  printf "\033[u"
 }
 
 generate_new_word () {
   selected_word="${words[$((RANDOM % ${#words[@]}))]}"
+  set -- $selected_word
+  selected_word="$@"
 }
 
 get_letter_correctness (){
@@ -92,6 +103,34 @@ get_letter_correctness (){
   printf "%s" "$correctness"
 }
 
+get_ans () {
+  print_info "%s" "$selected_word" 
+}
+
+set_word_length () {
+  [ -z "$1" ] && read -e -p "new length: " wl
+  wordlen=${1:-$wl}
+  board=()
+  gen_board
+  print_info "%s" "word length set to ${1:-$wl}"
+  bind_key=1
+}
+
+reset_game () {
+  board=()
+  guesses=()
+  guess_info=()
+  guessNo=0
+  print_info "%s" "game reset"
+  gen_board 
+}
+
+get_new_word () {
+  readarray <<< "$(get_words)"
+  generate_new_word
+  print_info "%s" "generated new word with length: $wordlen"
+}
+
 main () {
   fifo="/tmp/wordle-fifo"
   mkfifo "$fifo" 2>/dev/null
@@ -99,26 +138,22 @@ main () {
   for i in {1..7}; do printf "\n"; done
   print_board
   local guessNo=0
-  while read; do
+  set -o emacs
+  bind -x '"\C-a":get_ans'
+  bind -x '"\C-l":set_word_length'
+  bind -x '"\C-r":reset_game'
+  bind -x '"\C-n":get_new_word'
+  bind -x '"\C-p":clear'
+  while read -e ; do
+    [ ${bind_key:-0} -eq 1 ] && bind_key=0 && printf "\033[2K" && continue
     clear
     print_guess
     case $REPLY in
-      w:ans|w:a) print_info "%s" "$ans" ;;
-      w:word-length*|w:wl*)
-        wordlen="${REPLY#*=}"
-        board=()
-        gen_board
-        print_info "%s" "word length set to $wordlen" ;;
-      w:reset|w:r)
-        board=()
-        guesses=()
-        guess_info=()
-        guessNo=0
-        gen_board ;;
-      w:new-word|w:nw) 
-        generate_new_word
-        print_info "%s" "generated new word with length: $wordlen"
-        ;;
+      w:ans|w:a) get_ans ;;
+      w:word-length*|w:wl*) set_word_length "${REPLY#*=}" ;;
+      w:reset|w:r) reset_game ;;
+      w:new-word|w:nw) get_new_word ;;
+      *$selected_word*) printf "\033[32m%s\033[0m\n" "YOU WIN"; break ;;
       $(mul_str "?" "$wordlen"))
         if [[ "${words[@]}" =~ $REPLY ]]; then
           guesses[guessNo]=$REPLY 
@@ -131,11 +166,10 @@ main () {
         ;;
       *) print_err "%s" "invalid word ($REPLY)" ;;
     esac
-    printf "\033[7;0H"
+    printf "\033[$((lives+2));0H"
     print_board
     (( guessNo >= lives )) && break
   done
-  print_info "done"
 }
 
 generate_new_word
