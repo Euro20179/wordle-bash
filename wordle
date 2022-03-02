@@ -1,19 +1,33 @@
 #!/bin/bash
 clear
 
+usage () {
+  printf "%s\n" "wordle [-ulLf]" "Options:"
+  declare -A opts
+  opts[u]="whether or not to use strictly bash (can be slow)"
+  opts[l]="amount of lives, default: 5"
+  opts[L]="length of answer word, default: 5"
+  opts[f]="specify a word list file, default: $HOME/Documents/words.txt"
+  for opt in ${!opts[@]}; do
+    printf "\t-%-5s:%s\n" "$opt" "${opts[$opt]}"
+  done
+}
+
 use_bash_only=1
 wordlen=5
 lives=5
-while getopts "ul:L:" opt; do
+words_list_path="$HOME/Documents/words.txt"
+while getopts "ul:L:f:h" opt; do
   case "$opt" in
     u) use_bash_only=0 ;;
     l) lives=$OPTARG ;;
     L) wordlen=$OPTARG ;;
+    f) words_list_path=$OPTARG ;;
+    h) usage; exit ;;
   esac
 done
 shift $((OPTIND-1))
 
-words_list_path="${1:-$HOME/Documents/words.txt}"
 
 mul_str (){
   new_str="$str"
