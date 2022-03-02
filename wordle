@@ -169,8 +169,6 @@ get_new_word () {
 }
 
 main () {
-  fifo="/tmp/wordle-fifo"
-  mkfifo "$fifo" 2>/dev/null
   print_guess
   printf "\033[$((lives+2));0H"
   print_board
